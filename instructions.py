@@ -100,6 +100,10 @@ class Instruction:
 				del(code[index])
 			i, length = i + 1, len(code)
 
+	def addPop(self):
+		"adds POP_TOP to end of code -- for use in compSeq"
+		self.code.append(POP_TOP)
+
 
 def makeFunction(codeObject):
 	return FunctionType(codeObject, globals())
@@ -117,6 +121,7 @@ class numInstr(Instruction):
 
 		self.code = [LOAD_CONST, numIndex, 0]
 
+
 class varInstr(Instruction):
 	def __init__(self, lisp, var):
 		super(varInstr, self).__init__(lisp)
@@ -130,7 +135,7 @@ class varInstr(Instruction):
 		# 124 : LOAD_FAST
 		# 116 : LOAD_GLOBAL
 		# 101 : LOAD_NAME
-		self.code = [LOAD_NAME, varIndex, 0]
+		self.code = [LOAD_FAST, varIndex, 0]
 
 class defInstr(Instruction):
 	def __init__(self, lisp, var, valInstr):
@@ -142,8 +147,8 @@ class defInstr(Instruction):
 		self.stacksize = 2
 		self.names = valInstr.names
 
-		# names global, varnames local
-		self.names.add(var)
+		# names global, varnames local?
+		self.varnames.add(var)
 
 		def varIndex(names):
 			nonlocal var
@@ -154,7 +159,7 @@ class defInstr(Instruction):
 		# 97 : STORE_GLOBAL
 		# 90 : STORE_NAME
 		defCode = [DUP_TOP, 
-				STORE_GLOBAL, varIndex, 0]
+				STORE_FAST, varIndex, 0]
 		self.code = valInstr.code + defCode
 
 class ifInstr(Instruction):

@@ -19,24 +19,24 @@ def compExp(exp):
 	object later, and then into a function.
 	'''
 	lisp = schemify(exp)
-	debug_print('Compiling %s...' % lisp)
+	debug_print('Compiling %s' % lisp)
 
 	if isNum(exp):
-		debug_print('Number...')
+		debug_print('Number')
 		return  numInstr(lisp, exp)
 
 	elif isVar(exp):
-		debug_print('Variable...')
+		debug_print('Variable')
 		return  varInstr(lisp, exp)
 
 	elif isDef(exp):
-		debug_print('Define...')
+		debug_print('Define')
 		[_, var, val] = exp	
 		valInstr = compExp(val)
 		return  defInstr(lisp, var, valInstr)
 
 	elif isIf(exp):
-		debug_print('If...')
+		debug_print('If')
 		[_, test, then, othw] = exp
 		testInstr = compExp(test)
 		thenInstr = compExp(then)
@@ -45,15 +45,15 @@ def compExp(exp):
 			testInstr, thenInstr, othwInstr)
 
 	elif isBegin(exp):
-		debug_print('Begin...')
+		debug_print('Begin')
 		[_, *body] = exp
-		return compSeq(list(body))
+		return compSeq(body)
 
 	elif isLambda(exp):
-		debug_print('Lambda...')
+		debug_print('Lambda')
 
 		# [_, params, *body] = exp
-		# bodyCode = compSeq(list(body))
+		# bodyCode = compSeq(body)
 
 		# until we figure out compSeq
 		[_, params, body] = exp
@@ -61,7 +61,7 @@ def compExp(exp):
 		return  lambdaInstr(lisp, params, bodyInstr)
 
 	elif isPrimitive(exp):
-		debug_print('Primitive function...')
+		debug_print('Primitive function')
 		# assume binary func
 		[func, arg1, arg2] = exp
 		argInstr1, argInstr2 = map(compExp, (arg1, arg2))
@@ -71,6 +71,27 @@ def compExp(exp):
 		
 
 
+def compSeq(seq):
+	"compiles each expression in the sequence, but only returns the value of the last one"
+	# add name to seq
+	result = Instruction()
+	while seq:
+		[exp, *seq] = seq
+
+		instr = compExp(exp)
+
+		if seq: # don't pop the last one
+			instr.addPop()
+
+		# this exposes too much internals
+		# figure out how to move this to instructions
+		result.code += instr.code
+		result.stacksize += instr.stacksize
+		result.consts.update(instr.consts)
+		result.names.update(instr.names)
+		result.varnames.update(instr.varnames)
+
+	return result
 
 
 
@@ -91,7 +112,7 @@ def compExp(exp):
 
 
 
-
+'''
 numStr = '5'
 numFunc = compyle(numStr)
 
@@ -105,6 +126,12 @@ lamStr = '(lambda () 5)'
 lamFunc = compyle(lamStr)
 
 
-
 ifPrimStr = '(if (- 5 4) (* 4 5) (+ 8 9))'
 ifPrimFunc = compyle(ifPrimStr)
+
+eqStr = '(== 4 5)'
+eqFunc = compyle(eqStr)
+'''
+
+beginStr = '(begin (define x 5) (* x x))'
+beginFunc = compyle(beginStr)
