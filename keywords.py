@@ -20,6 +20,7 @@ arithFuncs = {
 	'-' : BINARY_SUBTRACT, 
 	'/' : BINARY_TRUE_DIVIDE,
 	'//': BINARY_FLOOR_DIVIDE,
+	'**': BINARY_POWER, 
 	'%' : BINARY_MODULO,
 }
 

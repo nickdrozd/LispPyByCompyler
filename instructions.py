@@ -11,8 +11,8 @@ class Instruction:
 		self.stacksize = 0
 		self.flags = 0
 		self.code = []
-		self.consts = set()
-		self.names = set()
+		self.consts = set([None])
+		self.names = set(['DUMMY'])
 		self.varnames = set()
 		self.filename = ''
 		self.name = name
@@ -126,16 +126,20 @@ class varInstr(Instruction):
 	def __init__(self, lisp, var):
 		super(varInstr, self).__init__(lisp)
 		self.stacksize = 1
-		self.names.add(var)
 
 		def varIndex(names):
 			nonlocal var
-			return names.index(var)
+			if var in names:
+				return names.index(var)
+			else:
+				print('%s undefined!' % var)
+				return names.index('DUMMY')
 
 		# 124 : LOAD_FAST
 		# 116 : LOAD_GLOBAL
 		# 101 : LOAD_NAME
-		self.code = [LOAD_FAST, varIndex, 0]
+		self.code = [LOAD_GLOBAL, varIndex, 0]
+
 
 class defInstr(Instruction):
 	def __init__(self, lisp, var, valInstr):
@@ -148,7 +152,7 @@ class defInstr(Instruction):
 		self.names = valInstr.names
 
 		# names global, varnames local?
-		self.varnames.add(var)
+		self.names.add(var)
 
 		def varIndex(names):
 			nonlocal var
@@ -159,7 +163,7 @@ class defInstr(Instruction):
 		# 97 : STORE_GLOBAL
 		# 90 : STORE_NAME
 		defCode = [DUP_TOP, 
-				STORE_FAST, varIndex, 0]
+				STORE_GLOBAL, varIndex, 0]
 		self.code = valInstr.code + defCode
 
 class ifInstr(Instruction):
@@ -172,6 +176,10 @@ class ifInstr(Instruction):
 
 		self.consts.update(test.consts, 
 			then.consts, othw.consts)
+		self.names.update(test.names, 
+			then.names, othw.names)
+		self.varnames.update(test.varnames, 
+			then.varnames, othw.varnames)
 
 		# nlocals, etc
 
@@ -203,8 +211,11 @@ class lambdaInstr(Instruction):
 
 		# ensure bodyInstr has the right argcount
 		argcount = len(params)
-		bodyInstr.argcount = argcount
-		bodyInstr.nlocals = argcount #???
+		# bodyInstr.argcount = argcount
+		# bodyInstr.nlocals = argcount #???
+
+		self.argcount = argcount
+		self.nlocals = argcount
 
 		lambdaName = 'lambda: <%s>' % bodyInstr.name
 
@@ -229,8 +240,7 @@ class lambdaInstr(Instruction):
 
 class primInstr(Instruction):
 	"func is string, args are Instructions"
-	def __init__(self, lisp, 
-		func, arg1, arg2):
+	def __init__(self, lisp, func, arg1, arg2):
 		super(primInstr, self).__init__(lisp)
 
 		self.consts.update(arg1.consts, arg2.consts)
@@ -246,4 +256,33 @@ class primInstr(Instruction):
 		self.code = arg1.code + arg2.code + funcOpCode
 
 		self.stacksize = max(arg1.stacksize, arg2.stacksize)
+
+
+class funcInstr(Instruction):
+	"func is Instruction, args is list of Instructions"
+	def __init__(self, lisp, func, args):	
+		super(funcInstr, self).__init__(lisp)
+
+		# not self.argcount???
+		argcount = len(args)
+
+		self.consts.update(func.consts)
+		self.names.update(func.names)
+		self.varnames.update(func.varnames)
+
+		while args:
+			[arg, *args] = args
+
+			self.consts.update(arg.consts)
+			self.names.update(arg.names)
+			self.varnames.update(arg.varnames)
+
+			self.code += arg.code
+			self.stacksize += arg.stacksize # ???
+
+		callCode = [CALL_FUNCTION, argcount, 0]
+
+		self.code = func.code + self.code + callCode
+
+
 
