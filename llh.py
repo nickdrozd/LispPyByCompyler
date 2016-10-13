@@ -1,5 +1,7 @@
 ''' LOW-LEVEL HELPERS '''
 
+from keywords import *
+
 # numbers
 
 def isNum(exp):
@@ -147,6 +149,9 @@ def operator(exp):
 def operands(exp):
 	return exp[1:]
 
+def isPrimitive(exp):
+	op = operator(exp)
+	return op in arithFuncs or op in cmp_op
 
 # let
 

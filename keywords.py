@@ -12,29 +12,18 @@ JUMPTARGET = [JUMP_ABSOLUTE,
 	JUMP_IF_TRUE_OR_POP, JUMP_IF_FALSE_OR_POP]
 
 
+# primitive functions
 
+arithFuncs = {
+	'+' : BINARY_ADD,
+	'*' : BINARY_MULTIPLY, 
+	'-' : BINARY_SUBTRACT, 
+	'/' : BINARY_TRUE_DIVIDE,
+	'//': BINARY_FLOOR_DIVIDE,
+}
 
+def getOpCode(func):
+	return arithFuncs[func]
 
-# primitives
-
-primitives = [
-# arithmetic operations
-'_+_', '_*_', '-', '/', 
-'add1', 'sub1',
-# boolean operations
-'not', '=', '<', '>', 
-'zero?', 'one?', 'eq?',
-# type-check operations 
-'null?', 'number?', 'list?',
-'boolean?', 'symbol?', 
-# list operations
-'cons', 'car', 'cdr', 
-'set-car!', 'set-cdr!', 
-'cadr', 'cddr', 'cdadr', 
-'caddr', 'cdddr', 'cadddr', 
-# I/O operations 
-'read', 'display', 
-'newline', 'error',
-# primitive application operations
-'applyNilFunc', 'applyOneFunc', 'applyTwoFunc',
-]
+def getCompIndex(func):
+	return cmp_op.index(func)

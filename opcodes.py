@@ -1,3 +1,5 @@
+from opcode import opmap, cmp_op
+
 INPLACE_TRUE_DIVIDE = 29
 BINARY_XOR = 65
 GET_YIELD_FROM_ITER = 69

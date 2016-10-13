@@ -19,7 +19,7 @@ def code_attr(obj):
     elif typeName == 'code':
         code = obj
     elif typeName == 'str':
-        code = compile(obj, '', 'eval')
+        code = compile(obj, '', 'exec')
 
     for attr in dir(code):
         prefix = attr[:3]

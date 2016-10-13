@@ -130,12 +130,11 @@ class varInstr(Instruction):
 		# 124 : LOAD_FAST
 		# 116 : LOAD_GLOBAL
 		# 101 : LOAD_NAME
-		self.code = [LOAD_GLOBAL, varIndex, 0]
+		self.code = [LOAD_NAME, varIndex, 0]
 
 class defInstr(Instruction):
 	def __init__(self, lisp, var, valInstr):
 		super(defInstr, self).__init__(lisp)
-		self.nlocals = valInstr.nlocals
 		self.consts = valInstr.consts
 		self.freevars = valInstr.freevars
 		self.cellvars = valInstr.cellvars
@@ -198,7 +197,9 @@ class lambdaInstr(Instruction):
 		bodyInstr.varnames.update(params)
 
 		# ensure bodyInstr has the right argcount
-		bodyInstr.argcount = len(params)
+		argcount = len(params)
+		bodyInstr.argcount = argcount
+		bodyInstr.nlocals = argcount #???
 
 		lambdaName = 'lambda: <%s>' % bodyInstr.name
 
@@ -220,3 +221,24 @@ class lambdaInstr(Instruction):
 		]
 
 		self.stacksize = 2
+
+class primInstr(Instruction):
+	"func is string, args are Instructions"
+	def __init__(self, lisp, 
+		func, arg1, arg2):
+		super(primInstr, self).__init__(lisp)
+
+		self.consts.update(arg1.consts, arg2.consts)
+		self.names.update(arg1.names, arg2.names)
+		self.varnames.update(arg1.varnames, arg2.varnames)
+
+		if func in arithFuncs:
+			funcOpCode = [getOpCode(func)]
+		if func in cmp_op:
+			index = getCompIndex(func)
+			funcOpCode = [COMPARE_OP, index, 0]
+
+		self.code = arg1.code + arg2.code + funcOpCode
+
+		self.stacksize = max(arg1.stacksize, arg2.stacksize)
+
